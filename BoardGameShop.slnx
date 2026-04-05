@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BoardGameShop.API/BoardGameShop.API.csproj" />
+  <Project Path="BoardGameShop.Application/BoardGameShop.Application.csproj" />
+  <Project Path="BoardGameShop.Domain/BoardGameShop.Domain.csproj" />
+  <Project Path="BoardGameShop.Infrastructure/BoardGameShop.Infrastructure.csproj" />
+</Solution>
