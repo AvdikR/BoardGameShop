@@ -28,13 +28,13 @@ builder.Services.AddDbContext<BoardGameShopDbContext>(options =>
 // -------------------------
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
 builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 var app = builder.Build();
 

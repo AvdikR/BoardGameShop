@@ -26,6 +26,10 @@ namespace BoardGameShop.Infrastructure.Data
             modelBuilder.Entity<Order>()
                 .Property(o => o.TotalPrice)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.Price)
+                .HasPrecision(18, 2);
         }
     }
 }
