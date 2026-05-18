@@ -17,6 +17,7 @@ namespace BoardGameShop.Infrastructure.Data
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
+        public DbSet<Catalog> Catalogs => Set<Catalog>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Product>()

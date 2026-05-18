@@ -11,6 +11,8 @@ namespace BoardGameShop.Domain.Entities
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
+        public int CatalogId { get; set; }
+        public Catalog Catalog { get; set; } = null!;
 
     }
 }

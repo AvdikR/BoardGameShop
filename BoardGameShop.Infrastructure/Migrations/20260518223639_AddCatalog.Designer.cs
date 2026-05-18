@@ -4,6 +4,7 @@ using BoardGameShop.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BoardGameShop.Infrastructure.Migrations
 {
     [DbContext(typeof(BoardGameShopDbContext))]
-    partial class BoardGameShopDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260518223639_AddCatalog")]
+    partial class AddCatalog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,22 +169,10 @@ namespace BoardGameShop.Infrastructure.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("ReservationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DurationHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("GameSessionName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
 
                     b.ToTable("Reservations");
                 });
@@ -225,17 +216,6 @@ namespace BoardGameShop.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Catalog");
-                });
-
-            modelBuilder.Entity("BoardGameShop.Domain.Entities.Reservation", b =>
-                {
-                    b.HasOne("BoardGameShop.Domain.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("BoardGameShop.Domain.Entities.Catalog", b =>
