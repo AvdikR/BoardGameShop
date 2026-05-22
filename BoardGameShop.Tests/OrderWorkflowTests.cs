@@ -79,5 +79,14 @@ namespace BoardGameShop.Tests
 
             Assert.Throws<DomainException>(() => order.Cancel());
         }
+
+        [Fact]
+        public void Pay_WithoutConfirm_Throws()
+        {
+            var order = new Order(1);
+            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+
+            Assert.Throws<DomainException>(() => order.Pay());
+        }
     }
 }

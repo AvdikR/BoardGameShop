@@ -59,5 +59,15 @@ namespace BoardGameShop.Tests
             Assert.Single(result.AppliedPromotions);
             Assert.Equal(17m, result.PromotionsDiscount);
         }
+
+        [Fact]
+        public void CalculateTotal_EmptyItemList_ReturnsZero()
+        {
+            var items = new List<OrderItem>();
+
+            var total = PricingCalculator.CalculateTotal(items, LoyaltyTier.Bronze);
+
+            Assert.Equal(0m, total);
+        }
     }
 }
