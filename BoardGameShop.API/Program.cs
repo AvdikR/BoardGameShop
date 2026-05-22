@@ -30,11 +30,15 @@ builder.Services.AddDbContext<BoardGameShopDbContext>(options =>
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
+builder.Services.AddScoped<BoardGameShop.Domain.Interfaces.IUnitOfWork, BoardGameShop.Infrastructure.UnitOfWork>();
+
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddScoped<BoardGameShop.Domain.Interfaces.IPromotionRepository, BoardGameShop.Infrastructure.Repository.PromotionRepository>();
 
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();

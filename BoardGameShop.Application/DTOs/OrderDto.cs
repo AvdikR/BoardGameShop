@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BoardGameShop.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,11 +11,15 @@ namespace BoardGameShop.Application.DTOs
 
         public int CustomerId { get; set; }
 
+        public string CustomerLoyalty { get; set; } = string.Empty;
+
+        public PricingDto Pricing { get; set; } = new();
+
         public DateTime OrderDate { get; set; }
 
         public decimal TotalPrice { get; set; }
 
-        public string Status { get; set; } = string.Empty;
+        public OrderStatus Status { get; set; }
 
         public List<OrderItemDto> Items { get; set; }
             = new();

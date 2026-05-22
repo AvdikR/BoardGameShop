@@ -12,5 +12,10 @@ namespace BoardGameShop.Domain.Interfaces
         Task<Order?> GetByIdAsync(int id);
 
         Task AddAsync(Order order);
+
+        Task UpdateAsync(Order order);
+
+        // Commit pending changes to the database (Unit of Work)
+        Task SaveChangesAsync();
     }
 }

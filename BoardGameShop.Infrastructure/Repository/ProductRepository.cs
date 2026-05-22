@@ -31,13 +31,15 @@ namespace BoardGameShop.Infrastructure.Repository
         public async Task AddAsync(Product product)
         {
             await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
+            // SaveChanges is managed by the application service (unit of work)
+            return;
         }
 
         public async Task UpdateAsync(Product product)
         {
             _context.Products.Update(product);
-            await _context.SaveChangesAsync();
+            // SaveChanges is managed by the application service (unit of work)
+            return;
         }
 
         public async Task DeleteAsync(int id)
@@ -46,7 +48,8 @@ namespace BoardGameShop.Infrastructure.Repository
             if (product != null)
             {
                 _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                // SaveChanges is managed by the application service (unit of work)
+                return;
             }
         }
 

@@ -3,4 +3,5 @@
   <Project Path="BoardGameShop.Application/BoardGameShop.Application.csproj" />
   <Project Path="BoardGameShop.Domain/BoardGameShop.Domain.csproj" />
   <Project Path="BoardGameShop.Infrastructure/BoardGameShop.Infrastructure.csproj" />
+  <Project Path="BoardGameShop.Tests/BoardGameShop.Tests.csproj" />
 </Solution>

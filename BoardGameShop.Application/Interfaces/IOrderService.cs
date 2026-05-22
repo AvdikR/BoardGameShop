@@ -2,15 +2,18 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BoardGameShop.Application.Interfaces
 {
     public interface IOrderService
     {
-        Task<IEnumerable<OrderDto>> GetAllAsync();
-
+        Task<int> CreateAsync(int customerId, List<(int productId, int quantity)> items);
+        Task<int> CreateAsync(CreateOrderDto dto);
         Task<OrderDto?> GetByIdAsync(int id);
+        Task<IEnumerable<OrderDto>> GetAllAsync();
+        Task ConfirmAsync(int orderId);
+        Task CancelAsync(int orderId);
 
-        Task CreateAsync(CreateOrderDto dto);
     }
 }

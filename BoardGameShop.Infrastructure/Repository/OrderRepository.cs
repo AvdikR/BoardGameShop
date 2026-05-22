@@ -17,27 +17,36 @@ namespace BoardGameShop.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Order>> GetAllAsync()
-        {
-            return await _context.Orders
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
-                .Include(o => o.Customer)
-                .ToListAsync();
-        }
-
         public async Task<Order?> GetByIdAsync(int id)
         {
             return await _context.Orders
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
                 .Include(o => o.Customer)
                 .FirstOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task<IEnumerable<Order>> GetAllAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                .Include(o => o.Customer)
+                .ToListAsync();
         }
 
         public async Task AddAsync(Order order)
         {
             await _context.Orders.AddAsync(order);
+            // SaveChanges managed by application service/unit of work
+        }
+
+        public async Task UpdateAsync(Order order)
+        {
+            _context.Orders.Update(order);
+            // SaveChanges managed by application service/unit of work
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
     }
