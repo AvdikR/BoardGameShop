@@ -1,133 +1,322 @@
 # 📝 Laboratory Work №3: Domain Analysis and Transition from Layered Architecture to DDD
+# Domain Analysis and Transition from Layered Architecture to DDD
 
 - **Discipline:** Domain Engineering Technologies
 - **Project:** BoardGameShop
 - **Theme:** Transition from Classical Layered Architecture to Domain-Driven Design
-- **Repository:** [BoardGameShop on GitHub](https://github.com/AvdikR/BoardGameShop)
+- **Repository:** https://github.com/AvdikR/BoardGameShop
 
 ---
 
-## 1. Project Overview
+# 1. Project Overview
 
-The project represents an online board game store implemented as a RESTful Web API application using .NET 10. The system currently focuses on the core e-commerce workflow: browsing products, selecting games, creating orders, and confirming purchases.
+The `BoardGameShop` project represents an online board game store implemented as a RESTful Web API application using `.NET 10` and `ASP.NET Core`.
 
-> At the current stage, the project does not implement authentication or authorization. Customer information is entered dynamically during order creation. This allows the team to focus primarily on business logic, domain modeling, and architectural organization.
+Initially, the system was designed using a classical layered architecture approach focused mainly on CRUD operations and database structure. During the analysis process, the project was reconsidered from a domain-oriented perspective in order to identify core business processes, business rules, and consistency boundaries.
 
-The domain also includes planned extensions related to board game reservations, DnD sessions, and renting physical spaces.
+The system currently supports:
 
----
+- product catalog management;
+- customer order processing;
+- order lifecycle management;
+- pricing and promotion calculation;
+- reservation functionality for future gameplay sessions.
 
-## 2. Stage 1 — Domain Events, Commands, and Aggregates
-
-### 2.1 Domain Events
-
-Domain events describe important business situations that already happened in the system.
-
-- **Catalog Context:** `ProductCreated`, `ProductUpdated`, `ProductRemoved`, `ProductAddedToCatalog`, `ProductStockUpdated`
-- **Ordering Context:** `OrderCreated`, `ProductAddedToOrder`, `ProductRemovedFromOrder`, `OrderConfirmed`, `OrderCancelled`, `OrderTotalCalculated`
-- **Customer Context:** `CustomerInformationProvided`, `CustomerDataUpdated`
-- **Reservation Context:** `ReservationCreated`, `ReservationCancelled`, `ReservationCompleted`, `GameSessionReserved`, `SpaceReserved`
-
-### 2.2 Commands
-
-Commands represent actions initiated by a user or the system that lead to domain events.
-
-- **Catalog:** `CreateProduct`, `UpdateProduct`, `DeleteProduct`, `AddProductToCatalog`, `UpdateProductStock`
-- **Ordering:** `CreateOrder`, `AddProductToOrder`, `RemoveProductFromOrder`, `ConfirmOrder`, `CancelOrder`, `CalculateOrderTotal`
-- **Customer:** `ProvideCustomerInformation`, `UpdateCustomerInformation`
-- **Reservation:** `CreateReservation`, `CancelReservation`, `ReserveGameSession`, `ReserveSpace`
-
-### 2.3 Aggregates
-
-Aggregates group related business operations and protect consistency boundaries.
-
-- **Product Aggregate:** Responsible for product information, pricing, stock quantity, preorder availability, and catalog assignment.
-- **Order Aggregate:** Controls the order lifecycle and ensures consistency of order items and total price calculation (includes `Order` and `OrderItem` entities).
-- **Customer Aggregate:** Manages customer contact information used during order confirmation and reservation creation.
-- **Reservation Aggregate:** Responsible for booking operations related to game sessions and physical spaces.
+> Authentication and authorization are intentionally omitted at the current stage in order to focus primarily on domain modeling and business logic implementation.
 
 ---
 
-## 3. Stage 2 — Bounded Contexts
+# 2. Stage 1 — Domain Events, Commands, and Aggregates
 
-### 3.1 Catalog Context
+## 2.1 Domain Events
 
-Responsible for storing and managing product information visible to customers.
+Domain events describe meaningful business situations that already occurred inside the system.
 
-- **Responsibilities:** Product management, categorization, catalog browsing, stock visibility.
-- **Main Terms:** `Product`, `Catalog`, `Category`, `Price`, `Stock`.
+### Catalog Context
 
-### 3.2 Ordering Context
+- `ProductCreated`
+- `ProductCatalogAssigned`
+- `ProductStockChanged`
+- `ProductPriceUpdated`
+- `ProductMarkedForPreorder`
 
-Handles customer purchases and order processing.
+### Ordering Context
 
-- **Responsibilities:** Order creation, adding products, calculating totals, order confirmation, status management.
-- **Main Terms:** `Order`, `OrderItem`, `Checkout`, `TotalPrice`, `Status`.
+- `OrderCreated`
+- `ProductAddedToOrder`
+- `OrderConfirmed`
+- `OrderPaid`
+- `OrderCancelled`
+- `OrderShipped`
+- `OrderDelivered`
+- `PromotionApplied`
+- `LoyaltyDiscountApplied`
+- `OrderTotalCalculated`
 
-### 3.3 Customer Context
+### Customer Context
 
-Responsible for storing temporary customer contact information used during order confirmation.
+- `CustomerInformationProvided`
+- `CustomerLoyaltyTierUpdated`
 
-- **Responsibilities:** Storing and updating customer data, linking customers with orders.
-- **Main Terms:** `Customer`, `Contact Information`, `Email`, `Phone Number`.
+### Reservation Context
 
-### 3.4 Reservation Context
-
-Supports future functionality related to reserving spaces and game sessions.
-
-- **Responsibilities:** Reservation management, booking game sessions, reserving physical spaces, tracking status.
-- **Main Terms:** `Reservation`, `GameSession`, `Space`, `ReservationStatus`, `SessionDate`.
-
----
-
-## 4. Stage 3 — Ubiquitous Language
-
-### 4.1 Catalog Context Language
-
-| Term         | Meaning                                             |
-| :----------- | :-------------------------------------------------- |
-| **Product**  | A board game or related item available in the store |
-| **Catalog**  | Collection of products grouped by categories        |
-| **Category** | Product grouping type                               |
-| **Price**    | Cost of a product                                   |
-| **Stock**    | Available amount of products                        |
-| **Preorder** | Ability to purchase a product before release        |
-
-### 4.2 Ordering Context Language
-
-| Term           | Meaning                           |
-| :------------- | :-------------------------------- |
-| **Order**      | Customer purchase request         |
-| **OrderItem**  | Single product inside an order    |
-| **Checkout**   | Confirmation process for an order |
-| **TotalPrice** | Final order amount                |
-| **Status**     | Current state of an order         |
-
-### 4.3 Customer Context Language
-
-| Term                    | Meaning                     |
-| :---------------------- | :-------------------------- |
-| **Customer**            | Person placing an order     |
-| **Contact Information** | Customer communication data |
-| **Email**               | Customer email address      |
-| **Phone Number**        | Customer contact number     |
-
-### 4.4 Reservation Context Language
-
-| Term                  | Meaning                     |
-| :-------------------- | :-------------------------- |
-| **Reservation**       | Booking operation           |
-| **GameSession**       | Organized gameplay activity |
-| **Space**             | Physical table or room      |
-| **ReservationStatus** | Current reservation state   |
-| **SessionDate**       | Date of gameplay            |
+- `ReservationCreated`
+- `ReservationCancelled`
+- `GameSessionReserved`
+- `SpaceReserved`
 
 ---
 
-## 5. Conclusion 🏁
+## 2.2 Commands
 
-During this laboratory work, the `BoardGameShop` project was analyzed from a domain-oriented perspective instead of a purely database-oriented structure. Domain events, commands, aggregates, bounded contexts, and ubiquitous language were identified for the system.
+Commands describe actions initiated by users or the system.
 
-The analysis demonstrated that even a relatively simple e-commerce application contains multiple business boundaries and semantic contexts. The transition from classical layered architecture toward **Domain-Driven Design** allows better separation of responsibilities and improves understanding of business processes.
+### Catalog Commands
 
-The resulting domain model can serve as a foundation for further migration toward a more complete DDD-oriented architecture in future project iterations.
+- `CreateProduct`
+- `UpdateProductPrice`
+- `UpdateProductStock`
+- `AssignProductToCatalog`
+- `EnablePreorder`
+
+### Ordering Commands
+
+- `CreateOrder`
+- `AddProductToOrder`
+- `ConfirmOrder`
+- `PayForOrder`
+- `CancelOrder`
+- `ShipOrder`
+- `DeliverOrder`
+- `ApplyPromotion`
+- `CalculateOrderTotal`
+
+### Customer Commands
+
+- `ProvideCustomerInformation`
+- `UpdateLoyaltyTier`
+
+### Reservation Commands
+
+- `CreateReservation`
+- `ReserveGameSession`
+- `ReserveSpace`
+- `CancelReservation`
+
+---
+
+## 2.3 Aggregates
+
+Aggregates define transactional and consistency boundaries inside the domain.
+
+### Order Aggregate
+
+The `Order` aggregate is the central business aggregate of the system.
+
+It controls:
+
+- order lifecycle transitions;
+- validation of order state;
+- consistency of order items;
+- total price calculation;
+- application of promotions and loyalty discounts.
+
+The aggregate includes:
+
+- `Order`
+- `OrderItem`
+
+`Order` acts as the Aggregate Root.
+
+---
+
+### Product Aggregate
+
+The `Product` aggregate manages catalog information and product availability.
+
+Responsibilities:
+
+- stock quantity consistency;
+- preorder availability;
+- product pricing;
+- catalog assignment.
+
+---
+
+### Customer Aggregate
+
+The `Customer` aggregate stores customer contact information and loyalty-related data used during checkout operations.
+
+---
+
+### Reservation Aggregate
+
+The `Reservation` aggregate manages booking operations for gameplay sessions and physical spaces.
+
+Responsibilities:
+
+- reservation validity;
+- reservation status consistency;
+- player capacity restrictions.
+
+---
+
+# 3. Stage 2 — Bounded Contexts
+
+The system was divided into bounded contexts according to business responsibilities and semantic boundaries.
+
+---
+
+## 3.1 Catalog Context
+
+The `Catalog Context` manages all information related to products visible to customers.
+
+Inside this context, a `Product` represents a commercial item with pricing, stock visibility, preorder availability, and categorization.
+
+### Responsibilities
+
+- product management;
+- catalog browsing;
+- category organization;
+- stock visibility.
+
+### Main Terms
+
+`Product`, `Catalog`, `Category`, `Price`, `Stock`, `Preorder`
+
+---
+
+## 3.2 Ordering Context
+
+The `Ordering Context` is the core business context of the system.
+
+Inside this context, an `Order` represents a complete purchase workflow rather than simply a database record.
+
+The context manages:
+
+- checkout operations;
+- order state transitions;
+- pricing rules;
+- loyalty discounts;
+- promotion calculation.
+
+### Responsibilities
+
+- order creation;
+- order confirmation;
+- price calculation;
+- discount application;
+- order lifecycle management.
+
+### Main Terms
+
+`Order`, `Checkout`, `Promotion`, `Discount`, `TotalPrice`, `Status`
+
+---
+
+## 3.3 Customer Context
+
+The `Customer Context` manages customer-related information required during purchasing operations.
+
+Currently, customer data is temporary and does not represent a fully authenticated account system.
+
+### Responsibilities
+
+- customer data management;
+- loyalty tracking;
+- linking customers with orders.
+
+### Main Terms
+
+`Customer`, `Contact Information`, `Email`, `Phone Number`, `LoyaltyTier`
+
+---
+
+## 3.4 Reservation Context
+
+The `Reservation Context` supports future gameplay reservation functionality.
+
+Inside this context, reservations represent booking operations rather than purchase transactions.
+
+### Responsibilities
+
+- reservation management;
+- session booking;
+- table reservation;
+- reservation status tracking.
+
+### Main Terms
+
+`Reservation`, `GameSession`, `Space`, `ReservationStatus`, `Capacity`
+
+---
+
+# 4. Stage 3 — Ubiquitous Language
+
+## 4.1 Catalog Context Language
+
+| Term | Meaning |
+|---|---|
+| `Product` | Board game or related commercial item |
+| `Catalog` | Collection of grouped products |
+| `Category` | Product classification |
+| `Stock` | Available amount of products |
+| `Preorder` | Purchase before official release |
+| `Price` | Commercial cost of a product |
+
+---
+
+## 4.2 Ordering Context Language
+
+| Term | Meaning |
+|---|---|
+| `Order` | Customer purchase workflow |
+| `Checkout` | Final confirmation process |
+| `Promotion` | Discount rule applied to an order |
+| `Loyalty Discount` | Discount based on customer tier |
+| `TotalPrice` | Final calculated amount |
+| `Status` | Current lifecycle state of an order |
+
+---
+
+## 4.3 Customer Context Language
+
+| Term | Meaning |
+|---|---|
+| `Customer` | Person purchasing products |
+| `LoyaltyTier` | Customer loyalty level |
+| `Contact Information` | Communication data |
+| `Email` | Customer email address |
+| `Phone Number` | Customer contact number |
+
+---
+
+## 4.4 Reservation Context Language
+
+| Term | Meaning |
+|---|---|
+| `Reservation` | Booking operation |
+| `GameSession` | Organized gameplay activity |
+| `Space` | Physical gameplay location |
+| `Capacity` | Maximum allowed participants |
+| `ReservationStatus` | Current reservation state |
+
+---
+
+# 5. Conclusion 🏁
+
+During this laboratory work, the `BoardGameShop` project was analyzed from a domain-oriented perspective instead of a purely database-oriented structure.
+
+The analysis demonstrated that the project contains several independent business subdomains and consistency boundaries that are not immediately visible in a classical layered architecture approach.
+
+Through the identification of:
+
+- domain events;
+- commands;
+- aggregates;
+- bounded contexts;
+- ubiquitous language;
+
+the system was conceptually restructured toward `Domain-Driven Design` principles.
+
+The resulting model provides a stronger foundation for future architectural evolution toward a more scalable and business-oriented system.
