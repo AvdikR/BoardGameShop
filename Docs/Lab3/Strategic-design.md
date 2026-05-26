@@ -1,4 +1,4 @@
-# 📝 Laboratory Work №3: Domain Analysis and Transition from Layered Architecture to DDD
+# 📝 Laboratory Work №3
 # Domain Analysis and Transition from Layered Architecture to DDD
 
 - **Discipline:** Domain Engineering Technologies
@@ -8,37 +8,37 @@
 
 ---
 
-# 1. Project Overview
+# 1. Загальний опис проєкту
 
-The `BoardGameShop` project represents an online board game store implemented as a RESTful Web API application using `.NET 10` and `ASP.NET Core`.
+Проєкт `BoardGameShop` представляє собою RESTful Web API застосунок для онлайн-магазину настільних ігор, реалізований за допомогою `.NET 10` та `ASP.NET Core`.
 
-Initially, the system was designed using a classical layered architecture approach focused mainly on CRUD operations and database structure. During the analysis process, the project was reconsidered from a domain-oriented perspective in order to identify core business processes, business rules, and consistency boundaries.
+Початкова архітектура системи будувалася за принципами класичної шарової архітектури та була орієнтована переважно на CRUD-операції й структуру бази даних. Під час виконання лабораторної роботи система була переосмислена з точки зору Domain-Driven Design (DDD), де основний фокус зміщується з таблиць БД на бізнес-процеси, бізнес-правила та межі відповідальності.
 
-The system currently supports:
+На поточному етапі система підтримує:
 
-- product catalog management;
-- customer order processing;
-- order lifecycle management;
-- pricing and promotion calculation;
-- reservation functionality for future gameplay sessions.
+- управління каталогом настільних ігор;
+- створення та оформлення замовлень;
+- життєвий цикл замовлення;
+- розрахунок знижок та промоакцій;
+- базову модель бронювання ігрових сесій та столів.
 
-> Authentication and authorization are intentionally omitted at the current stage in order to focus primarily on domain modeling and business logic implementation.
+> Авторизація та автентифікація користувачів тимчасово відсутні, оскільки основна увага приділяється моделюванню домену та реалізації бізнес-логіки.
 
 ---
 
-# 2. Stage 1 — Domain Events, Commands, and Aggregates
+# 2. Етап 1 — Domain Events, Commands та Aggregates
 
 ## 2.1 Domain Events
 
-Domain events describe meaningful business situations that already occurred inside the system.
+Domain Events описують важливі бізнес-події, які вже відбулися у системі.
 
 ### Catalog Context
 
 - `ProductCreated`
-- `ProductCatalogAssigned`
-- `ProductStockChanged`
 - `ProductPriceUpdated`
+- `ProductStockChanged`
 - `ProductMarkedForPreorder`
+- `ProductCatalogAssigned`
 
 ### Ordering Context
 
@@ -69,7 +69,7 @@ Domain events describe meaningful business situations that already occurred insi
 
 ## 2.2 Commands
 
-Commands describe actions initiated by users or the system.
+Commands описують дії користувача або системи, які призводять до виникнення Domain Events.
 
 ### Catalog Commands
 
@@ -107,108 +107,136 @@ Commands describe actions initiated by users or the system.
 
 ## 2.3 Aggregates
 
-Aggregates define transactional and consistency boundaries inside the domain.
+Aggregates визначають межі транзакційної цілісності та бізнес-інваріантів у домені.
+
+---
 
 ### Order Aggregate
 
-The `Order` aggregate is the central business aggregate of the system.
+`Order` є центральним Aggregate Root системи.
 
-It controls:
+Агрегат відповідає за:
 
-- order lifecycle transitions;
-- validation of order state;
-- consistency of order items;
-- total price calculation;
-- application of promotions and loyalty discounts.
+- контроль життєвого циклу замовлення;
+- перевірку коректності переходів між статусами;
+- узгодженість `OrderItem`;
+- розрахунок фінальної вартості;
+- застосування знижок та промоакцій.
 
-The aggregate includes:
+До агрегату входять:
 
 - `Order`
 - `OrderItem`
-
-`Order` acts as the Aggregate Root.
 
 ---
 
 ### Product Aggregate
 
-The `Product` aggregate manages catalog information and product availability.
+`Product` агрегат відповідає за каталог товарів та їх бізнес-представлення.
 
-Responsibilities:
+Відповідальності агрегату:
 
-- stock quantity consistency;
-- preorder availability;
-- product pricing;
-- catalog assignment.
+- керування ціною;
+- контроль доступності товару;
+- підтримка передзамовлення;
+- належність до каталогу.
 
 ---
 
 ### Customer Aggregate
 
-The `Customer` aggregate stores customer contact information and loyalty-related data used during checkout operations.
+`Customer` агрегат відповідає за контактні дані покупця та механізм лояльності.
+
+На поточному етапі система використовує тимчасову модель клієнта без повноцінної авторизації.
 
 ---
 
 ### Reservation Aggregate
 
-The `Reservation` aggregate manages booking operations for gameplay sessions and physical spaces.
+`Reservation` агрегат відповідає за процес бронювання ігрових сесій та фізичних місць.
 
-Responsibilities:
+Агрегат контролює:
 
-- reservation validity;
-- reservation status consistency;
-- player capacity restrictions.
+- коректність бронювання;
+- доступність місць;
+- часові обмеження;
+- максимальну кількість учасників.
 
 ---
 
-# 3. Stage 2 — Bounded Contexts
+## 2.4 Приклад взаємодії Domain Events та Commands
 
-The system was divided into bounded contexts according to business responsibilities and semantic boundaries.
+```mermaid
+flowchart TD
+
+A[CreateOrder] --> B[OrderCreated]
+B --> C[AddProductToOrder]
+C --> D[ProductAddedToOrder]
+D --> E[CalculateOrderTotal]
+E --> F[OrderTotalCalculated]
+F --> G[ApplyPromotion]
+G --> H[PromotionApplied]
+H --> I[ConfirmOrder]
+I --> J[OrderConfirmed]
+J --> K[PayForOrder]
+K --> L[OrderPaid]
+```
+
+---
+
+# 3. Етап 2 — Bounded Contexts
+
+Система була поділена на декілька Bounded Context відповідно до бізнес-відповідальностей та семантичних меж.
 
 ---
 
 ## 3.1 Catalog Context
 
-The `Catalog Context` manages all information related to products visible to customers.
+`Catalog Context` відповідає за представлення товарів для користувача.
 
-Inside this context, a `Product` represents a commercial item with pricing, stock visibility, preorder availability, and categorization.
+У цьому контексті `Product` є маркетинговою одиницею каталогу, яка містить:
 
-### Responsibilities
+- опис гри;
+- категорію;
+- вартість;
+- інформацію про передзамовлення;
+- візуальне представлення товару.
 
-- product management;
-- catalog browsing;
-- category organization;
-- stock visibility.
+### Основні відповідальності
 
-### Main Terms
+- управління каталогом;
+- категоризація товарів;
+- оновлення цін;
+- відображення доступності товару.
 
-`Product`, `Catalog`, `Category`, `Price`, `Stock`, `Preorder`
+### Основні терміни
+
+`Product`, `Catalog`, `Category`, `Price`, `Preorder`
 
 ---
 
 ## 3.2 Ordering Context
 
-The `Ordering Context` is the core business context of the system.
+`Ordering Context` є центральним бізнес-контекстом системи.
 
-Inside this context, an `Order` represents a complete purchase workflow rather than simply a database record.
+У межах цього контексту `Order` розглядається не як таблиця БД, а як бізнес-процес оформлення покупки.
 
-The context manages:
+Контекст відповідає за:
 
-- checkout operations;
-- order state transitions;
-- pricing rules;
-- loyalty discounts;
-- promotion calculation.
+- створення замовлення;
+- управління статусами;
+- розрахунок фінальної ціни;
+- застосування акцій;
+- перевірку бізнес-правил.
 
-### Responsibilities
+### Основні відповідальності
 
-- order creation;
-- order confirmation;
-- price calculation;
-- discount application;
-- order lifecycle management.
+- checkout-процес;
+- lifecycle management;
+- pricing logic;
+- discount calculation.
 
-### Main Terms
+### Основні терміни
 
 `Order`, `Checkout`, `Promotion`, `Discount`, `TotalPrice`, `Status`
 
@@ -216,107 +244,132 @@ The context manages:
 
 ## 3.3 Customer Context
 
-The `Customer Context` manages customer-related information required during purchasing operations.
+`Customer Context` відповідає за роботу з інформацією про покупця.
 
-Currently, customer data is temporary and does not represent a fully authenticated account system.
+На поточному етапі клієнт не є повноцінним акаунтом системи, а використовується як тимчасова модель контактної інформації при оформленні замовлення.
 
-### Responsibilities
+У майбутньому контекст може бути розширений до повноцінного Identity/Profile Management Context.
 
-- customer data management;
-- loyalty tracking;
-- linking customers with orders.
+### Основні відповідальності
 
-### Main Terms
+- збереження контактної інформації;
+- підтримка loyalty logic;
+- зв'язок покупця із замовленнями.
 
-`Customer`, `Contact Information`, `Email`, `Phone Number`, `LoyaltyTier`
+### Основні терміни
+
+`Customer`, `Email`, `PhoneNumber`, `LoyaltyTier`
 
 ---
 
 ## 3.4 Reservation Context
 
-The `Reservation Context` supports future gameplay reservation functionality.
+`Reservation Context` відповідає за бронювання столів та ігрових сесій.
 
-Inside this context, reservations represent booking operations rather than purchase transactions.
+Процеси бронювання мають часові обмеження та залежать від доступності місць і максимальної кількості учасників.
 
-### Responsibilities
+### Основні відповідальності
 
-- reservation management;
-- session booking;
-- table reservation;
-- reservation status tracking.
+- бронювання столів;
+- реєстрація на GameSession;
+- контроль доступності місць;
+- керування часовими слотами.
 
-### Main Terms
+### Основні терміни
 
-`Reservation`, `GameSession`, `Space`, `ReservationStatus`, `Capacity`
+`Reservation`, `GameSession`, `Space`, `Capacity`, `ReservationStatus`
 
 ---
 
-# 4. Stage 3 — Ubiquitous Language
+## 3.5 Context Mapping
+
+Нижче наведено спрощену схему взаємодії між Bounded Context.
+
+```mermaid
+flowchart LR
+
+CatalogContext --> OrderingContext
+CustomerContext --> OrderingContext
+OrderingContext --> ReservationContext
+
+CatalogContext[Catalog Context]
+OrderingContext[Ordering Context]
+CustomerContext[Customer Context]
+ReservationContext[Reservation Context]
+```
+
+### Опис взаємодії контекстів
+
+- `Ordering Context` використовує інформацію про товари з `Catalog Context`.
+- `Customer Context` надає контактні дані для оформлення замовлення.
+- `Reservation Context` працює незалежно від процесу покупки, але може бути пов'язаний із клієнтом.
+- `Ordering Context` є центральним бізнес-контекстом системи.
+
+---
+
+# 4. Етап 3 — Ubiquitous Language
 
 ## 4.1 Catalog Context Language
 
-| Term | Meaning |
+| Термін | Значення |
 |---|---|
-| `Product` | Board game or related commercial item |
-| `Catalog` | Collection of grouped products |
-| `Category` | Product classification |
-| `Stock` | Available amount of products |
-| `Preorder` | Purchase before official release |
-| `Price` | Commercial cost of a product |
+| `Product` | Настільна гра або товар магазину |
+| `Catalog` | Набір товарів, згрупованих за категоріями |
+| `Category` | Тип або жанр настільної гри |
+| `Price` | Вартість товару |
+| `Stock` | Доступна кількість товару |
+| `Preorder` | Можливість оформлення передзамовлення |
 
 ---
 
 ## 4.2 Ordering Context Language
 
-| Term | Meaning |
+| Термін | Значення |
 |---|---|
-| `Order` | Customer purchase workflow |
-| `Checkout` | Final confirmation process |
-| `Promotion` | Discount rule applied to an order |
-| `Loyalty Discount` | Discount based on customer tier |
-| `TotalPrice` | Final calculated amount |
-| `Status` | Current lifecycle state of an order |
+| `Order` | Бізнес-процес оформлення покупки |
+| `OrderItem` | Окрема позиція у замовленні |
+| `Checkout` | Процес підтвердження замовлення |
+| `Promotion` | Правило застосування знижки |
+| `TotalPrice` | Фінальна вартість замовлення |
+| `Status` | Поточний стан замовлення |
 
 ---
 
 ## 4.3 Customer Context Language
 
-| Term | Meaning |
+| Термін | Значення |
 |---|---|
-| `Customer` | Person purchasing products |
-| `LoyaltyTier` | Customer loyalty level |
-| `Contact Information` | Communication data |
-| `Email` | Customer email address |
-| `Phone Number` | Customer contact number |
+| `Customer` | Покупець товарів |
+| `Email` | Контактна електронна адреса |
+| `PhoneNumber` | Контактний номер телефону |
+| `LoyaltyTier` | Рівень лояльності клієнта |
 
 ---
 
 ## 4.4 Reservation Context Language
 
-| Term | Meaning |
+| Термін | Значення |
 |---|---|
-| `Reservation` | Booking operation |
-| `GameSession` | Organized gameplay activity |
-| `Space` | Physical gameplay location |
-| `Capacity` | Maximum allowed participants |
-| `ReservationStatus` | Current reservation state |
+| `Reservation` | Операція бронювання |
+| `GameSession` | Ігрова подія або DnD-сесія |
+| `Space` | Ігровий стіл або кімната |
+| `Capacity` | Максимальна кількість учасників |
+| `ReservationStatus` | Поточний стан бронювання |
 
 ---
 
-# 5. Conclusion 🏁
+# 5. Висновок 🏁
 
-During this laboratory work, the `BoardGameShop` project was analyzed from a domain-oriented perspective instead of a purely database-oriented structure.
+У результаті виконання лабораторної роботи було проведено аналіз системи `BoardGameShop` з точки зору Domain-Driven Design.
 
-The analysis demonstrated that the project contains several independent business subdomains and consistency boundaries that are not immediately visible in a classical layered architecture approach.
+Перехід від класичної CRUD-орієнтованої архітектури до доменно-орієнтованого підходу дозволив виділити ключові бізнес-процеси, межі відповідальності та точки транзакційної цілісності системи.
 
-Through the identification of:
+Під час роботи були визначені:
 
-- domain events;
-- commands;
-- aggregates;
-- bounded contexts;
-- ubiquitous language;
+- Domain Events;
+- Commands;
+- Aggregates;
+- Bounded Contexts;
+- Ubiquitous Language.
 
-the system was conceptually restructured toward `Domain-Driven Design` principles.
-
-The resulting model provides a stronger foundation for future architectural evolution toward a more scalable and business-oriented system.
+Отримана модель демонструє можливість подальшої еволюції проєкту у напрямку Clean Architecture, більш ізольованих доменних модулів або мікросервісної архітектури.
