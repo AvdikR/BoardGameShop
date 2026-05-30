@@ -22,5 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BoardGameShop.Domain\BoardGameShop.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BoardGameShop.Application\BoardGameShop.Application.csproj" />
+  </ItemGroup>
 
 </Project>

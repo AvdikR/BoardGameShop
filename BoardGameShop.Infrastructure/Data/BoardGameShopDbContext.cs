@@ -47,4 +47,8 @@ namespace BoardGameShop.Infrastructure.Data
                     money.Property(m => m.Currency).HasColumnName("TotalPriceCurrency").HasMaxLength(3);
                 });
         }
+
+
+}
+
 }

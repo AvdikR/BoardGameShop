@@ -7,7 +7,7 @@ using System.Text;
 
 namespace BoardGameShop.Domain.Entities
 {
-    public class Order : BaseEntity
+    public class Order : Common.AggregateRoot
     {
         public int CustomerId { get; private set; }
 
@@ -19,8 +19,8 @@ namespace BoardGameShop.Domain.Entities
 
         public OrderStatus Status { get; private set; }
 
-        public ICollection<OrderItem> OrderItems { get; private set; }
-            = new List<OrderItem>();
+        private readonly List<OrderItem> _orderItems = new();
+        public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
         // ---------------------------------
         // Constructor
@@ -40,7 +40,7 @@ namespace BoardGameShop.Domain.Entities
             // Inventory rule
             product.ReserveStock(quantity);
 
-            var existingItem = OrderItems
+            var existingItem = _orderItems
                 .FirstOrDefault(x => x.ProductId == product.Id);
 
             // Якщо товар вже є в замовленні
@@ -56,7 +56,7 @@ namespace BoardGameShop.Domain.Entities
                     product.Price
                 );
 
-                OrderItems.Add(orderItem);
+                _orderItems.Add(orderItem);
             }
 
             RecalculateTotal();
@@ -81,9 +81,9 @@ namespace BoardGameShop.Domain.Entities
         private void RecalculateTotal()
         {
             var loyalty = Customer != null ? Customer.LoyaltyTier : Domain.Enums.LoyaltyTier.Bronze;
-            var totalDecimal = Domain.Services.PricingCalculator.CalculateTotal(OrderItems, loyalty);
+            var totalDecimal = Domain.Services.PricingCalculator.CalculateTotal(_orderItems, loyalty);
 
-            TotalPrice = new Money(totalDecimal); // Використовуємо Value Object
+            TotalPrice = Money.Create(totalDecimal); // Використовуємо Value Object
         }
 
         // Basic discount rules — keep small and explicit for lab requirements
@@ -98,7 +98,7 @@ namespace BoardGameShop.Domain.Entities
 
         public void Confirm()
         {
-            if (!OrderItems.Any())
+            if (!_orderItems.Any())
                 throw new DomainException("Order cannot be empty");
             if (Status != OrderStatus.Created)
                 throw new DomainException("Only created orders can be confirmed");

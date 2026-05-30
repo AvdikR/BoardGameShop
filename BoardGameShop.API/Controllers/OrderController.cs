@@ -1,5 +1,6 @@
 ﻿using BoardGameShop.Application.DTOs;
 using BoardGameShop.Application.Interfaces;
+using BoardGameShop.Application.UseCases.Orders;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BoardGameShop.API.Controllers

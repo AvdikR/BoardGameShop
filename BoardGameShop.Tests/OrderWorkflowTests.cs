@@ -12,7 +12,8 @@ namespace BoardGameShop.Tests
         public void Confirm_WithItems_Succeeds()
         {
             var order = new Order(1);
-            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+            var product = new Product("P","D",10m, 10, 1);
+            order.AddItem(product, 1);
 
             order.Confirm();
 
@@ -31,7 +32,8 @@ namespace BoardGameShop.Tests
         public void FullWorkflow_AllTransitionsAllowed()
         {
             var order = new Order(1);
-            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+            var product = new Product("P","D",10m, 10, 1);
+            order.AddItem(product, 1);
 
             order.Confirm();
             order.Pay();
@@ -45,7 +47,8 @@ namespace BoardGameShop.Tests
         public void Ship_WithoutPay_Throws()
         {
             var order = new Order(1);
-            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+            var product = new Product("P","D",10m, 10, 1);
+            order.AddItem(product, 1);
 
             order.Confirm();
 
@@ -61,7 +64,8 @@ namespace BoardGameShop.Tests
             Assert.Equal(OrderStatus.Cancelled, order1.Status);
 
             var order2 = new Order(2);
-            order2.OrderItems.Add(new OrderItem(2, 1, 20m));
+            var product2 = new Product("P2","D2",20m, 10, 1);
+            order2.AddItem(product2, 1);
             order2.Confirm();
             order2.Cancel();
             Assert.Equal(OrderStatus.Cancelled, order2.Status);
@@ -71,7 +75,8 @@ namespace BoardGameShop.Tests
         public void Cancel_FromShipped_Throws()
         {
             var order = new Order(1);
-            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+            var product = new Product("P","D",10m, 10, 1);
+            order.AddItem(product, 1);
 
             order.Confirm();
             order.Pay();
@@ -84,7 +89,8 @@ namespace BoardGameShop.Tests
         public void Pay_WithoutConfirm_Throws()
         {
             var order = new Order(1);
-            order.OrderItems.Add(new OrderItem(1, 1, 10m));
+            var product = new Product("P","D",10m, 10, 1);
+            order.AddItem(product, 1);
 
             Assert.Throws<DomainException>(() => order.Pay());
         }
