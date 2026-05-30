@@ -1,197 +1,229 @@
-# 📝 Practical Work №4
-# Domain Model Implementation and Tactical DDD Patterns
+# 📝 Practical Work №4: Implementing Tactical DDD Patterns
 
-- **Discipline:** Domain Engineering Technologies
-- **Project:** BoardGameShop
-- **Theme:** Value Objects, Aggregate Root, Domain Events and Use Cases
-- **Repository:** https://github.com/AvdikR/BoardGameShop
-
----
-
-# 1. Project Overview
-
-Проєкт `BoardGameShop` представляє собою RESTful Web API застосунок для онлайн-магазину настільних ігор, реалізований за допомогою `.NET 10` та `ASP.NET Core`.
-
-На попередніх етапах система будувалась переважно на принципах класичної шарової архітектури, де доменні сутності виступали простими структурами даних. У межах даної практичної роботи було виконано перехід до tactical patterns Domain-Driven Design (DDD), де бізнес-логіка переноситься всередину доменного шару.
-
-Основна увага приділялась:
-
-- реалізації `Value Objects`;
-- перетворенню `Order` на `Aggregate Root`;
-- реалізації `Domain Events`;
-- створенню `Domain Event Dispatcher`;
-- реалізації `Use Case` через `Command Handler`.
+* **Discipline:** Domain Engineering Technologies
+* **Project:** BoardGameShop
+* **Theme:** Value Objects, Aggregate Roots, Domain Events and Use Cases
+* **Repository:** https://github.com/AvdikR/BoardGameShop
+* **Branch:** `feature/lab4-refactor`
 
 ---
 
-# 2. Step 1 — Value Objects
+# 1. Overview
 
-## 2.1 Призначення Value Objects
+This practical work continues the transition from a classical layered architecture toward Domain-Driven Design (DDD). During previous stages, the domain model, bounded contexts, aggregates and ubiquitous language were identified. The goal of this work was to move business rules from service and infrastructure layers into the domain layer and implement tactical DDD patterns.
 
-У Domain-Driven Design `Value Object` використовується для представлення значень, які не мають власної ідентичності, але містять бізнес-сенс та правила валідації.
-
-Value Objects дозволяють:
-
-- централізувати бізнес-правила;
-- уникнути дублювання валідації;
-- зробити доменну модель більш виразною;
-- забезпечити незмінність (immutability).
+The implementation was performed on the existing `BoardGameShop` project, which represents an online board game store built with ASP.NET Core, Entity Framework Core and .NET 10.
 
 ---
 
-## 2.2 Money Value Object
+# 2. Implemented Changes
 
-Для представлення ціни товару та фінальної вартості замовлення був реалізований `Money Value Object`.
+During the refactoring process the following improvements were introduced:
+
+* Added `Money` Value Object.
+* Introduced `AggregateRoot` base class.
+* Converted `Order` into an Aggregate Root.
+* Added support for Domain Events.
+* Implemented `OrderCreatedEvent`.
+* Added `IDomainEvent` abstraction.
+* Extended `BaseEntity` with domain event support.
+* Implemented `CreateOrderCommandHandler`.
+* Integrated transaction management through `UnitOfWork`.
+* Moved business validation rules into domain entities.
+
+---
+
+# 3. Step 1 – Value Objects
+
+## Motivation
+
+Originally prices were represented using primitive data types (`decimal`). Such an approach scatters validation logic throughout the application.
+
+To encapsulate money-related rules, a dedicated `Money` Value Object was introduced.
+
+## Money.cs
 
 ```csharp
-public record Money(decimal Amount, string Currency)
+public sealed record Money
 {
-    public static Money Create(decimal amount, string currency)
+    public decimal Amount { get; init; }
+
+    public string Currency { get; init; }
+
+    public static Money Create(
+        decimal amount,
+        string currency = "UAH")
     {
         if (amount < 0)
-            throw new ArgumentException("Amount cannot be negative");
+        {
+            throw new DomainException(
+                "Amount cannot be negative.");
+        }
 
-        return new Money(amount, currency);
+        return new Money
+        {
+            Amount = amount,
+            Currency = currency
+        };
+    }
+
+    public static Money Zero(
+        string currency = "UAH")
+    {
+        return new Money
+        {
+            Amount = 0,
+            Currency = currency
+        };
     }
 }
 ```
 
-### Основні переваги
+## Result
 
-- неможливість створення від’ємної ціни;
-- централізована валідація;
-- повторне використання в різних агрегатах;
-- інкапсуляція логіки роботи з грошовими значеннями.
+The Value Object guarantees:
 
----
-
-## 2.3 Інші можливі Value Objects
-
-У проєкті також можуть використовуватись:
-
-- `Email`
-- `PhoneNumber`
-- `Quantity`
-- `Discount`
-- `ReservationTimeSlot`
+* non-negative monetary values;
+* immutable representation of money;
+* centralized validation;
+* improved expressiveness of the domain model.
 
 ---
 
-# 3. Step 2 — Aggregate Root
+# 4. Step 2 – Aggregate Root
 
-## 3.1 Order Aggregate Root
+## AggregateRoot Base Class
 
-Центральним агрегатом системи було обрано `Order`.
+A dedicated Aggregate Root abstraction was introduced to support domain events and aggregate consistency boundaries.
 
-У DDD-підході `Order` більше не є просто таблицею БД або DTO-моделлю. Агрегат відповідає за контроль власного стану та забезпечення бізнес-інваріантів.
+```csharp
+public abstract class AggregateRoot : BaseEntity
+{
+}
+```
 
 ---
 
-## 3.2 Інкапсуляція бізнес-логіки
+## Order Aggregate
 
-Для забезпечення консистентності:
-- відкриті setters були замінені на `private setters`;
-- модифікація стану виконується лише через бізнес-методи;
-- усі перевірки виконуються всередині агрегату.
+The `Order` entity was transformed into an Aggregate Root.
 
 ```csharp
 public class Order : AggregateRoot
 {
-    public Guid Id { get; private set; }
+    private readonly List<OrderItem> _orderItems = new();
+
+    public IReadOnlyCollection<OrderItem> OrderItems
+        => _orderItems.AsReadOnly();
+
+    public OrderStatus Status { get; private set; }
 
     public Money TotalPrice { get; private set; }
 
-    private readonly List<OrderItem> _items = new();
-
-    public IReadOnlyCollection<OrderItem> Items => _items;
-
-    public void AddItem(Product product, int quantity)
-    {
-        if (quantity <= 0)
-            throw new ArgumentException("Quantity must be greater than zero");
-
-        _items.Add(new OrderItem(product.Id, quantity, product.Price));
-
-        RaiseDomainEvent(new ProductAddedToOrderEvent(Id, product.Id));
-    }
+    // Business methods
 }
 ```
 
 ---
 
-## 3.3 Бізнес-інваріанти Aggregate Root
+## Business Operations
 
-`Order Aggregate` забезпечує:
+Instead of exposing setters, the aggregate now controls state changes through business methods.
 
-- контроль переходів між статусами;
-- перевірку кількості товарів;
-- узгодженість `OrderItem`;
-- централізований розрахунок вартості;
-- застосування бізнес-правил.
-
----
-
-## 3.4 Aggregate Interaction Diagram
-
-```mermaid
-classDiagram
-
-class Order {
-    +Guid Id
-    +Money TotalPrice
-    +AddItem()
-    +ConfirmOrder()
-}
-
-class OrderItem {
-    +Guid ProductId
-    +int Quantity
-}
-
-class Money {
-    +decimal Amount
-    +string Currency
-}
-
-Order --> OrderItem
-Order --> Money
-```
-
----
-
-# 4. Step 3 — Domain Events
-
-## 4.1 Призначення Domain Events
-
-`Domain Events` використовуються для опису важливих бізнес-подій, які вже відбулися у системі.
-
-Події дозволяють:
-- зменшити зв’язність між компонентами;
-- реалізувати реактивну архітектуру;
-- відокремити бізнес-процеси.
-
----
-
-## 4.2 Приклади Domain Events
-
-У межах проєкту були визначені:
-
-- `OrderCreatedEvent`
-- `ProductAddedToOrderEvent`
-- `OrderConfirmedEvent`
-- `OrderPaidEvent`
-- `PromotionAppliedEvent`
-
----
-
-## 4.3 Приклад Domain Event
+### Adding Items
 
 ```csharp
-public class OrderCreatedEvent : IDomainEvent
+public void AddItem(
+    Product product,
+    int quantity)
 {
-    public Guid OrderId { get; }
+    if (quantity <= 0)
+    {
+        throw new DomainException(
+            "Quantity must be positive.");
+    }
 
-    public OrderCreatedEvent(Guid orderId)
+    _orderItems.Add(
+        new OrderItem(
+            product.Id,
+            quantity,
+            product.Price));
+
+    RecalculateTotal();
+}
+```
+
+### Confirming Orders
+
+```csharp
+public void Confirm()
+{
+    if (!_orderItems.Any())
+    {
+        throw new DomainException(
+            "Cannot confirm an empty order.");
+    }
+
+    Status = OrderStatus.Confirmed;
+}
+```
+
+### Other Supported Operations
+
+* `AssignCustomer()`
+* `Pay()`
+* `Ship()`
+* `Deliver()`
+* `Cancel()`
+
+---
+
+# 5. Step 3 – Domain Events
+
+## Domain Event Abstraction
+
+```csharp
+public interface IDomainEvent
+{
+}
+```
+
+---
+
+## BaseEntity Support
+
+Domain events are stored inside the base entity.
+
+```csharp
+private readonly List<IDomainEvent> _domainEvents
+    = new();
+
+public IReadOnlyCollection<IDomainEvent>
+    DomainEvents => _domainEvents;
+
+protected void RaiseDomainEvent(
+    IDomainEvent domainEvent)
+{
+    _domainEvents.Add(domainEvent);
+}
+
+public void ClearDomainEvents()
+{
+    _domainEvents.Clear();
+}
+```
+
+---
+
+## OrderCreatedEvent
+
+```csharp
+public sealed class OrderCreatedEvent
+    : IDomainEvent
+{
+    public int OrderId { get; }
+
+    public OrderCreatedEvent(int orderId)
     {
         OrderId = orderId;
     }
@@ -200,129 +232,120 @@ public class OrderCreatedEvent : IDomainEvent
 
 ---
 
-# 5. Step 3 — Domain Event Dispatcher
+## Raising Events
 
-## 5.1 Dispatcher
-
-Після збереження агрегату необхідно автоматично обробити всі накопичені доменні події.
-
-Для цього використовується `DomainEventDispatcher`.
+The event is generated automatically during order creation.
 
 ```csharp
-public interface IDomainEventDispatcher
-{
-    Task DispatchAndClear(IEnumerable<AggregateRoot> entities);
-}
+RaiseDomainEvent(
+    new OrderCreatedEvent(Id));
 ```
 
 ---
 
-## 5.2 Dispatcher Workflow
+# 6. Step 4 – Use Case Implementation
 
-```mermaid
-flowchart TD
+To orchestrate the order creation workflow, a Command Handler was implemented.
 
-A[Aggregate Root] --> B[Raise Domain Event]
-B --> C[SaveChangesAsync]
-C --> D[Domain Event Dispatcher]
-D --> E[Event Handler]
-```
-
----
-
-## 5.3 Призначення Dispatcher
-
-Dispatcher:
-- збирає події з агрегатів;
-- передає їх обробникам;
-- очищує список подій після обробки;
-- дозволяє ізолювати бізнес-процеси.
-
----
-
-# 6. Step 4 — Use Case / Command Handler
-
-## 6.1 Призначення Command Handler
-
-`Command Handler` виконує orchestration бізнес-процесу та координує взаємодію між Application Layer і Domain Layer.
-
-Основні етапи:
-1. Завантаження необхідних даних.
-2. Виклик бізнес-методів агрегату.
-3. Збереження агрегату.
-4. Dispatch Domain Events.
-
----
-
-## 6.2 CreateOrderCommand
-
-```csharp
-public record CreateOrderCommand(
-    Guid ProductId,
-    int Quantity,
-    string CustomerName
-);
-```
-
----
-
-## 6.3 CreateOrderCommandHandler
+## CreateOrderCommandHandler
 
 ```csharp
 public class CreateOrderCommandHandler
 {
-    public async Task Handle(CreateOrderCommand command)
+    private readonly IOrderRepository
+        _orderRepository;
+
+    private readonly IProductRepository
+        _productRepository;
+
+    private readonly ICustomerRepository
+        _customerRepository;
+
+    private readonly IUnitOfWork
+        _unitOfWork;
+
+    public async Task<int> Handle(
+        CreateOrderCommand command)
     {
-        var product = await _productRepository.GetById(command.ProductId);
+        await _unitOfWork.BeginTransactionAsync();
 
-        var order = new Order();
+        try
+        {
+            var customer =
+                await _customerRepository
+                    .GetByIdAsync(
+                        command.CustomerId);
 
-        order.AddItem(product, command.Quantity);
+            var order =
+                new Order();
 
-        await _orderRepository.Save(order);
+            order.AssignCustomer(customer);
 
-        await _domainEventDispatcher.DispatchAndClear(new[] { order });
+            foreach (var item in command.Items)
+            {
+                var product =
+                    await _productRepository
+                        .GetByIdAsync(item.ProductId);
+
+                order.AddItem(
+                    product,
+                    item.Quantity);
+            }
+
+            await _orderRepository
+                .AddAsync(order);
+
+            await _unitOfWork.CommitAsync();
+
+            return order.Id;
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync();
+            throw;
+        }
     }
 }
 ```
 
 ---
 
-## 6.4 Use Case Flow
+# 7. Architecture After Refactoring
 
-```mermaid
-sequenceDiagram
-
-actor Client
-participant Handler
-participant Order
-participant Repository
-participant Dispatcher
-
-Client->>Handler: CreateOrderCommand
-Handler->>Order: AddItem()
-Order-->>Handler: Domain Event
-Handler->>Repository: Save(Order)
-Handler->>Dispatcher: Dispatch Events
+```text
+Application Layer
+│
+├── Commands
+│   └── CreateOrderCommandHandler
+│
+Domain Layer
+│
+├── Aggregates
+│   └── Order
+│
+├── ValueObjects
+│   └── Money
+│
+├── Events
+│   └── OrderCreatedEvent
+│
+└── Common
+    ├── AggregateRoot
+    └── BaseEntity
+│
+Infrastructure Layer
+│
+├── Repositories
+├── UnitOfWork
+└── EF Core
 ```
 
 ---
 
-# 7. Conclusion 🏁
+# 8. Conclusion
 
-У результаті виконання практичної роботи було реалізовано основні tactical patterns Domain-Driven Design у межах проєкту `BoardGameShop`.
+During this practical work the `BoardGameShop` project was refactored using tactical Domain-Driven Design patterns.
 
-Було виконано:
-- реалізацію `Value Objects`;
-- перетворення `Order` на `Aggregate Root`;
-- створення `Domain Events`;
-- реалізацію `Domain Event Dispatcher`;
-- реалізацію `Use Case` через `Command Handler`.
+A dedicated `Money` Value Object was introduced to encapsulate monetary rules. The `Order` entity became an Aggregate Root responsible for enforcing business invariants and controlling its own lifecycle. Domain Events were added to represent important business occurrences, while `CreateOrderCommandHandler` was implemented to orchestrate the order creation use case.
 
-DDD-підхід дозволив зробити доменну модель:
-- більш інкапсульованою;
-- більш орієнтованою на бізнес-логіку;
-- менш залежною від інфраструктурного шару;
-- більш готовою до масштабування.
-
-Отримана архітектура створює основу для подальшого переходу до `Clean Architecture`, `CQRS` або мікросервісного підходу.
+As a result, the domain model became more expressive, business-oriented and less dependent on infrastructure concerns. The project now follows DDD principles more closely and provides a solid foundation for future architectural evolution.
