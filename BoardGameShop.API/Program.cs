@@ -46,6 +46,9 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<ReservationService>();
 
+builder.Services.AddScoped<BoardGameShop.Application.Interfaces.IDomainEventDispatcher, BoardGameShop.Infrastructure.Services.SimpleEventDispatcher>();
+builder.Services.AddScoped<BoardGameShop.Application.UseCases.Orders.CreateOrderCommandHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

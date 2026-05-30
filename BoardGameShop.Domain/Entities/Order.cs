@@ -15,7 +15,7 @@ namespace BoardGameShop.Domain.Entities
 
         public DateTime OrderDate { get; private set; }
 
-        public decimal TotalPrice { get; private set; }
+        public Money TotalPrice { get; private set; } = Money.Zero();
 
         public OrderStatus Status { get; private set; }
 
@@ -27,14 +27,6 @@ namespace BoardGameShop.Domain.Entities
         // ---------------------------------
 
         private Order() { }
-
-        public Order(int customerId)
-        {
-            CustomerId = customerId;
-
-            OrderDate = DateTime.UtcNow;
-            Status = OrderStatus.Created;
-        }
 
         // ---------------------------------
         // DOMAIN METHODS
@@ -89,9 +81,9 @@ namespace BoardGameShop.Domain.Entities
         private void RecalculateTotal()
         {
             var loyalty = Customer != null ? Customer.LoyaltyTier : Domain.Enums.LoyaltyTier.Bronze;
+            var totalDecimal = Domain.Services.PricingCalculator.CalculateTotal(OrderItems, loyalty);
 
-            TotalPrice = Domain.Services.PricingCalculator
-                .CalculateTotal(OrderItems, loyalty);
+            TotalPrice = new Money(totalDecimal); // Використовуємо Value Object
         }
 
         // Basic discount rules — keep small and explicit for lab requirements
@@ -148,6 +140,16 @@ namespace BoardGameShop.Domain.Entities
                 throw new DomainException("Only created or confirmed orders can be cancelled");
 
             Status = OrderStatus.Cancelled;
+        }
+
+        public Order(int customerId)
+        {
+            CustomerId = customerId;
+            OrderDate = DateTime.UtcNow;
+            Status = OrderStatus.Created;
+
+            // Збуджуємо доменну подію
+            RaiseDomainEvent(new Events.OrderCreatedEvent(this.Id, customerId));
         }
     }
 }

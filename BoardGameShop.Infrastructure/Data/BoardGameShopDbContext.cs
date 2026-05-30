@@ -26,15 +26,10 @@ namespace BoardGameShop.Infrastructure.Data
                 .Property(p => p.Price)
                 .HasPrecision(18, 2);
 
-            modelBuilder.Entity<Order>()
-                .Property(o => o.TotalPrice)
-                .HasPrecision(18, 2);
-
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.Price)
                 .HasPrecision(18, 2);
 
-            // Explicitly configure relationships to ensure foreign keys are created as expected
             modelBuilder.Entity<Order>()
                 .HasMany(o => o.OrderItems)
                 .WithOne(oi => oi.Order)
@@ -44,6 +39,12 @@ namespace BoardGameShop.Infrastructure.Data
                 .HasOne(oi => oi.Product)
                 .WithMany()
                 .HasForeignKey(oi => oi.ProductId);
+
+            modelBuilder.Entity<Order>()
+                .OwnsOne(o => o.TotalPrice, money =>
+                {
+                    money.Property(m => m.Amount).HasColumnName("TotalPriceAmount").HasPrecision(18, 2);
+                    money.Property(m => m.Currency).HasColumnName("TotalPriceCurrency").HasMaxLength(3);
+                });
         }
-    }
 }

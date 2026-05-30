@@ -9,10 +9,12 @@ namespace BoardGameShop.API.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _service;
+        private readonly CreateOrderCommandHandler _createOrderHandler;
 
-        public OrderController(IOrderService service)
+        public OrderController(IOrderService service, CreateOrderCommandHandler createOrderHandler)
         {
             _service = service;
+            _createOrderHandler = createOrderHandler;
         }
 
         [HttpGet]
@@ -35,8 +37,9 @@ namespace BoardGameShop.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateOrderDto dto)
         {
-            await _service.CreateAsync(dto);
-            return Ok();
+            // Тепер процес створення керується через Command Handler
+            var orderId = await _createOrderHandler.Handle(dto);
+            return Ok(new { OrderId = orderId });
         }
     }
 }
