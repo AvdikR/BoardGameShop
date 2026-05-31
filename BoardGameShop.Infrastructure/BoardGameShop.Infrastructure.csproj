@@ -25,5 +25,8 @@
   <ItemGroup>
     <ProjectReference Include="..\BoardGameShop.Application\BoardGameShop.Application.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
 
 </Project>

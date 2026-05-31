@@ -54,8 +54,6 @@ namespace BoardGameShop.Application.Services
                 order.AssignCustomer(customer);
             }
 
-            var updatedProducts = new List<Product>();
-
             await _unitOfWork.BeginTransactionAsync();
 
             try
@@ -68,11 +66,8 @@ namespace BoardGameShop.Application.Services
                         throw new Exception($"Product {item.productId} not found");
 
                     // DDD: order aggregate enforces business rules and reserves stock
+                    // Product is loaded and tracked by EF; changes (stock) will be detected by UnitOfWork/DbContext.
                     order.AddItem(product, item.quantity);
-
-                    // collect updated products to persist
-                    updatedProducts.Add(product);
-                    await _productRepository.UpdateAsync(product);
                 }
 
                 await _orderRepository.AddAsync(order);
@@ -81,7 +76,7 @@ namespace BoardGameShop.Application.Services
                 await _unitOfWork.SaveChangesAsync();
 
                 await _unitOfWork.CommitAsync();
-                }
+            }
             catch
             {
                 await _unitOfWork.RollbackAsync();
